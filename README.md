@@ -43,7 +43,11 @@ err = c.Del(id)
 
 Gouq library will automatically choose the instance online to deal with the queue methods. You needn't to worry about the connections and etcd results.
 
-For more information, you can read the sample code in `examples/go-uq.go`. To run the sample:
+For more information, take a look at Godoc.org:
+
+[https://godoc.org/github.com/buaazp/libuq/gouq](https://godoc.org/github.com/buaazp/libuq/gouq)
+
+You can also read the sample code in `examples/go-uq.go`. To run the sample:
 
 ```
 go build examples/go-uq.go
