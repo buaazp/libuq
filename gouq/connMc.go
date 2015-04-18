@@ -82,34 +82,34 @@ func (c *connMc) dials() error {
 	return nil
 }
 
-func (c *connMc) findTopic(topic string) ([]string, error) {
-	if c.etcdClient == nil {
-		return []string{c.addr}, nil
-	}
+// func (c *connMc) findTopic(topic string) ([]string, error) {
+// 	if c.etcdClient == nil {
+// 		return []string{c.addr}, nil
+// 	}
 
-	resp, err := c.etcdClient.Get(topic, true, false)
-	if err != nil {
-		log.Printf("etcd get error: %s", err)
-		return nil, err
-	}
-	if len(resp.Node.Nodes) == 0 {
-		errmsg := fmt.Sprintf("no UQ server has topic[%s]", topic)
-		return nil, errors.New(errmsg)
-	}
+// 	resp, err := c.etcdClient.Get(topic, true, false)
+// 	if err != nil {
+// 		log.Printf("etcd get error: %s", err)
+// 		return nil, err
+// 	}
+// 	if len(resp.Node.Nodes) == 0 {
+// 		errmsg := fmt.Sprintf("no UQ server has topic[%s]", topic)
+// 		return nil, errors.New(errmsg)
+// 	}
 
-	topicSvrs := make([]string, len(resp.Node.Nodes))
-	for i, node := range resp.Node.Nodes {
-		parts := strings.Split(node.Key, "/")
-		log.Printf("parts: %v", parts)
+// 	topicSvrs := make([]string, len(resp.Node.Nodes))
+// 	for i, node := range resp.Node.Nodes {
+// 		parts := strings.Split(node.Key, "/")
+// 		log.Printf("parts: %v", parts)
 
-		addr := parts[len(parts)-1]
-		log.Printf("server-%d : %s", i, addr)
+// 		addr := parts[len(parts)-1]
+// 		log.Printf("server-%d : %s", i, addr)
 
-		topicSvrs[i] = addr
-	}
+// 		topicSvrs[i] = addr
+// 	}
 
-	return topicSvrs, nil
-}
+// 	return topicSvrs, nil
+// }
 
 func (c *connMc) add(topic, line string, recycle time.Duration) error {
 	if topic == "" {
@@ -269,7 +269,7 @@ func (c *connMc) pop(key string) (string, []byte, error) {
 
 func (c *connMc) del(key string) error {
 	parts := strings.SplitN(key, "/", 2)
-	if len(parts) != 2 {
+	if len(parts) < 2 {
 		return errors.New("key illegal")
 	}
 	addr := parts[0]

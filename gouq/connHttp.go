@@ -2,7 +2,6 @@ package uq
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -86,34 +85,34 @@ func (c *connHttp) dials() error {
 	return nil
 }
 
-func (c *connHttp) findTopic(topic string) ([]string, error) {
-	if c.etcdClient == nil {
-		return []string{c.addr}, nil
-	}
+// func (c *connHttp) findTopic(topic string) ([]string, error) {
+// 	if c.etcdClient == nil {
+// 		return []string{c.addr}, nil
+// 	}
 
-	resp, err := c.etcdClient.Get(topic, true, false)
-	if err != nil {
-		log.Printf("etcd get error: %s", err)
-		return nil, err
-	}
-	if len(resp.Node.Nodes) == 0 {
-		errmsg := fmt.Sprintf("no UQ server has topic[%s]", topic)
-		return nil, errors.New(errmsg)
-	}
+// 	resp, err := c.etcdClient.Get(topic, true, false)
+// 	if err != nil {
+// 		log.Printf("etcd get error: %s", err)
+// 		return nil, err
+// 	}
+// 	if len(resp.Node.Nodes) == 0 {
+// 		errmsg := fmt.Sprintf("no UQ server has topic[%s]", topic)
+// 		return nil, errors.New(errmsg)
+// 	}
 
-	topicSvrs := make([]string, len(resp.Node.Nodes))
-	for i, node := range resp.Node.Nodes {
-		parts := strings.Split(node.Key, "/")
-		log.Printf("parts: %v", parts)
+// 	topicSvrs := make([]string, len(resp.Node.Nodes))
+// 	for i, node := range resp.Node.Nodes {
+// 		parts := strings.Split(node.Key, "/")
+// 		log.Printf("parts: %v", parts)
 
-		addr := parts[len(parts)-1]
-		log.Printf("server-%d : %s", i, addr)
+// 		addr := parts[len(parts)-1]
+// 		log.Printf("server-%d : %s", i, addr)
 
-		topicSvrs[i] = addr
-	}
+// 		topicSvrs[i] = addr
+// 	}
 
-	return topicSvrs, nil
-}
+// 	return topicSvrs, nil
+// }
 
 func (c *connHttp) add(topic, line string, recycle time.Duration) error {
 	if topic == "" {
@@ -129,23 +128,22 @@ func (c *connHttp) add(topic, line string, recycle time.Duration) error {
 				log.Printf("choose error: %v", err)
 			} else {
 				log.Printf("addr = %s", addr)
-				cr := new(createRequest)
-				cr.TopicName = topic
-				if line != "" {
-					cr.LineName = line
-				}
-				cr.Recycle = recycle
-				body, err := json.Marshal(cr)
-				b := bytes.NewBuffer(body)
-				req, err := http.NewRequest("POST", "http://"+addr+"/add", b)
+				recycleStr := recycle.String()
+				reqFormBody := "topic=" + topic + "&line=" + line + "&recycle=" + recycleStr
+				// bf := bytes.NewBufferString(reqFormBody)
+				// b.req.Body = ioutil.NopCloser(bf)
+				// b.req.ContentLength = int64(len(t))
+				b := bytes.NewBufferString(reqFormBody)
+				req, err := http.NewRequest("PUT", "http://"+addr+"/v1/queues", b)
 				if err != nil {
 					log.Printf("new req error: %v", err)
 				} else {
+					req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 					resp, err := c.Do(req)
 					if err != nil {
 						log.Printf("do error: %v", err)
 					} else {
-						if resp.StatusCode == http.StatusNoContent {
+						if resp.StatusCode == http.StatusCreated {
 							return nil
 						} else {
 							respBody, err := ioutil.ReadAll(resp.Body)
@@ -207,11 +205,13 @@ func (c *connHttp) push(key string, value []byte) error {
 				log.Printf("choose error: %v", err)
 			} else {
 				log.Printf("addr = %s", addr)
-				b := bytes.NewBuffer(value)
-				req, err := http.NewRequest("POST", "http://"+addr+"/push/"+key, b)
+				reqFormBody := "value=" + string(value)
+				b := bytes.NewBufferString(reqFormBody)
+				req, err := http.NewRequest("POST", "http://"+addr+"/v1/queues/"+key, b)
 				if err != nil {
 					log.Printf("new req error: %v", err)
 				} else {
+					req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 					resp, err := c.Do(req)
 					if err != nil {
 						log.Printf("do error: %v", err)
@@ -257,7 +257,7 @@ func (c *connHttp) pop(key string) (string, []byte, error) {
 			nomsg := 0
 			for _, addr := range c.addrs {
 				log.Printf("addr = %s", addr)
-				req, err := http.NewRequest("GET", "http://"+addr+"/pop/"+key, nil)
+				req, err := http.NewRequest("GET", "http://"+addr+"/v1/queues/"+key, nil)
 				if err != nil {
 					log.Printf("new req error: %v", err)
 				} else {
@@ -274,8 +274,8 @@ func (c *connHttp) pop(key string) (string, []byte, error) {
 							}
 
 							if resp.StatusCode == http.StatusOK {
-								id := resp.Header.Get("X-UQ-MessageID")
-								cid := fmt.Sprintf("%s/%s/%s", addr, key, id)
+								id := resp.Header.Get("X-UQ-ID")
+								cid := fmt.Sprintf("%s/%s", addr, id)
 								return cid, value, nil
 							} else {
 								log.Printf("pop error: %s", string(value))
@@ -308,7 +308,7 @@ func (c *connHttp) pop(key string) (string, []byte, error) {
 
 func (c *connHttp) del(key string) error {
 	parts := strings.SplitN(key, "/", 2)
-	if len(parts) != 2 {
+	if len(parts) < 2 {
 		return errors.New("key illegal")
 	}
 	addr := parts[0]
@@ -316,8 +316,7 @@ func (c *connHttp) del(key string) error {
 
 	retry := 0
 	for retry < maxRetry {
-		b := bytes.NewBuffer([]byte(cid))
-		req, err := http.NewRequest("POST", "http://"+addr+"/del", b)
+		req, err := http.NewRequest("DELETE", "http://"+addr+"/v1/queues/"+cid, nil)
 		if err != nil {
 			log.Printf("new req error: %v", err)
 		} else {

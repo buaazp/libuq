@@ -106,34 +106,34 @@ func (c *connRedis) dials() error {
 	return nil
 }
 
-func (c *connRedis) findTopic(topic string) ([]string, error) {
-	if c.etcdClient == nil {
-		return []string{c.addr}, nil
-	}
+// func (c *connRedis) findTopic(topic string) ([]string, error) {
+// 	if c.etcdClient == nil {
+// 		return []string{c.addr}, nil
+// 	}
 
-	resp, err := c.etcdClient.Get(topic, true, false)
-	if err != nil {
-		log.Printf("etcd get error: %s", err)
-		return nil, err
-	}
-	if len(resp.Node.Nodes) == 0 {
-		errmsg := fmt.Sprintf("no UQ server has topic[%s]", topic)
-		return nil, errors.New(errmsg)
-	}
+// 	resp, err := c.etcdClient.Get(topic, true, false)
+// 	if err != nil {
+// 		log.Printf("etcd get error: %s", err)
+// 		return nil, err
+// 	}
+// 	if len(resp.Node.Nodes) == 0 {
+// 		errmsg := fmt.Sprintf("no UQ server has topic[%s]", topic)
+// 		return nil, errors.New(errmsg)
+// 	}
 
-	topicSvrs := make([]string, len(resp.Node.Nodes))
-	for i, node := range resp.Node.Nodes {
-		parts := strings.Split(node.Key, "/")
-		log.Printf("parts: %v", parts)
+// 	topicSvrs := make([]string, len(resp.Node.Nodes))
+// 	for i, node := range resp.Node.Nodes {
+// 		parts := strings.Split(node.Key, "/")
+// 		log.Printf("parts: %v", parts)
 
-		addr := parts[len(parts)-1]
-		log.Printf("server-%d : %s", i, addr)
+// 		addr := parts[len(parts)-1]
+// 		log.Printf("server-%d : %s", i, addr)
 
-		topicSvrs[i] = addr
-	}
+// 		topicSvrs[i] = addr
+// 	}
 
-	return topicSvrs, nil
-}
+// 	return topicSvrs, nil
+// }
 
 func (c *connRedis) add(topic, line string, recycle time.Duration) error {
 	if topic == "" {
@@ -150,7 +150,7 @@ func (c *connRedis) add(topic, line string, recycle time.Duration) error {
 			} else {
 				log.Printf("addr = %s", addr)
 				if line == "" {
-					_, err := conn.Do("QADD", topic)
+					_, err := conn.Do("ADD", topic)
 					if err != nil {
 						if strings.Contains(err.Error(), "Existed") {
 							return nil
@@ -159,7 +159,7 @@ func (c *connRedis) add(topic, line string, recycle time.Duration) error {
 					}
 				} else {
 					fullLineName := topic + "/" + line
-					_, err := conn.Do("QADD", fullLineName, recycle.String())
+					_, err := conn.Do("ADD", fullLineName, recycle.String())
 					if err != nil {
 						if strings.Contains(err.Error(), "Existed") {
 							return nil
@@ -218,7 +218,7 @@ func (c *connRedis) push(key string, value []byte) error {
 				log.Printf("choose error: %v", err)
 			} else {
 				log.Printf("addr = %s", addr)
-				_, err := conn.Do("QPUSH", key, value)
+				_, err := conn.Do("SET", key, value)
 				if err != nil {
 					log.Printf("push error: %v", err)
 				} else {
@@ -253,7 +253,7 @@ func (c *connRedis) pop(key string) (string, []byte, error) {
 			nomsg := 0
 			for addr, conn := range c.conns {
 				log.Printf("addr = %s", addr)
-				reply, err := redis.Values(conn.Do("QPOP", key))
+				reply, err := redis.Strings(conn.Do("GET", key))
 				if err != nil {
 					if strings.Contains(err.Error(), "No Message") {
 						nomsg++
@@ -262,9 +262,9 @@ func (c *connRedis) pop(key string) (string, []byte, error) {
 					}
 					continue
 				}
-				id := uint64(reply[0].(int64))
-				value := []byte(reply[1].([]byte))
-				cid := fmt.Sprintf("%s/%s/%d", addr, key, id)
+				value := []byte(reply[0])
+				id := reply[1]
+				cid := fmt.Sprintf("%s/%s", addr, id)
 				return cid, value, nil
 			}
 			if nomsg == count {
@@ -291,7 +291,7 @@ func (c *connRedis) pop(key string) (string, []byte, error) {
 
 func (c *connRedis) del(key string) error {
 	parts := strings.SplitN(key, "/", 2)
-	if len(parts) != 2 {
+	if len(parts) < 2 {
 		return errors.New("key illegal")
 	}
 	addr := parts[0]
@@ -303,7 +303,7 @@ func (c *connRedis) del(key string) error {
 		if !ok {
 			return errors.New(addr + " is not avilable")
 		}
-		_, err := conn.Do("QDEL", cid)
+		_, err := conn.Do("DEL", cid)
 		if err != nil {
 			log.Printf("del error: %v", err)
 		} else {
