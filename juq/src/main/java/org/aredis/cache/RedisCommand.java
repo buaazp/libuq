@@ -35,10 +35,10 @@ import org.aredis.cache.RedisCommandInfo.ResultType;
  */
 public enum RedisCommand {
 
-    //###### modified by sumory ######
+    //###### modified by sumory for uq ######
     ADD("kk"), DEL("k"),
     //DEL("k@k", false, false, IntegerShardedResultHandler.instance),
-    //###### modified by sumory ######
+    //###### modified by sumory for uq ######
 
     APPEND("kp"),
     /**

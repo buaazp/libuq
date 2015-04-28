@@ -16,8 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.sumory.juq.JuqException;
-import com.sumory.juq.thirdparty.RedisConnection;
-import com.sumory.juq.thirdparty.RedisConnectionPair;
+import com.sumory.juq.protocol.RedisConnection;
+import com.sumory.juq.protocol.RedisConnectionPair;
 
 public class ConnRedis implements Connection {
     private final static Logger logger = LoggerFactory.getLogger(ConnRedis.class);

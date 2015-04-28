@@ -1,4 +1,4 @@
-package com.sumory.juq.thirdparty;
+package com.sumory.juq.protocol;
 
 public class RedisConnectionPair {
     private String addr;
