@@ -9,7 +9,7 @@ import java.util.Map.Entry;
 import java.util.Random;
 
 import org.apache.commons.lang3.StringUtils;
-import org.boon.etcd.EtcdClient;
+import org.boon.etcd.Etcd;
 import org.boon.etcd.Node;
 import org.boon.etcd.Response;
 import org.slf4j.Logger;
@@ -21,19 +21,24 @@ import com.sumory.juq.protocol.RedisConnectionPair;
 
 public class ConnRedis implements Connection {
     private final static Logger logger = LoggerFactory.getLogger(ConnRedis.class);
-    // private static final Log logger = LogFactory.getLog(ConnRedis.class);
     private String addr;
-    private EtcdClient etcdClient;
+    private Etcd etcdClient;
     private String etcdKey;
     private String[] addrs;
     private Map<String, RedisConnection> conns;
 
     private int maxRetry;
 
-    public ConnRedis(String ip, int port) throws JuqException {
-        String addr = ip + ":" + port;
-        this.addr = addr;
-        this.maxRetry = 1;
+    public ConnRedis(String ip, int port, int maxRetry) throws JuqException {
+        this.addr = ip + ":" + port;
+        this.maxRetry = maxRetry;
+        this.updateConnPool();
+    }
+
+    public ConnRedis(Etcd etcdClient, String etcdKey, int maxRetry) throws JuqException {
+        this.etcdClient = etcdClient;
+        this.etcdKey = etcdKey;
+        this.maxRetry = maxRetry;
         this.updateConnPool();
     }
 

@@ -14,6 +14,6 @@ public enum RedisCommand {
 }
 ```
 
-see the [tests](src/test/java/com/sumory/juq/JuqTest.java) for usage detail.
+check [single node usage](src/test/java/com/sumory/juq/JuqTest.java) and [cluster usage](src/test/java/com/sumory/juq/EtcdTest.java) for detail.
 
 
