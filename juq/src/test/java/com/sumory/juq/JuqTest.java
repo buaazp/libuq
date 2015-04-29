@@ -17,8 +17,9 @@ public class JuqTest {
             String topic = "topic_from_juq1";
             String line = "line";
             String msg = "msg001";
+            int maxRetry = 1;
 
-            Connection conn = new ConnRedis(host, port);
+            Connection conn = new ConnRedis(host, port, maxRetry);
             conn.add(topic);
             conn.add(topic, line, 10);
             conn.push(topic, msg.getBytes());
@@ -45,9 +46,10 @@ public class JuqTest {
         String topic = "topic_from_juq2";
         String line = "line_with_recycle";
         String msg = "msg001";
+        int maxRetry = 1;
 
         try {
-            Connection conn = new ConnRedis(host, port);
+            Connection conn = new ConnRedis(host, port, maxRetry);
             conn.add(topic);
             conn.add(topic, line, 10);
             conn.push(topic, msg.getBytes());
