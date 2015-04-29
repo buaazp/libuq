@@ -1,6 +1,6 @@
 ## UQ Cluster library
 
-[UQ](https://github.com/buaazp/uq) is a distributed persistent message queue. Libuq is the program language bindings for uq cluster.
+[UQ](https://github.com/buaazp/uq) is a distributed persistent message queue. Libuq is the programing language bindings for uq cluster.
 
 
 ### Progress
@@ -9,6 +9,7 @@
 :------:|:--------:|:--------:
 [UQ](https://github.com/buaazp/uq)   |   HTTP   | built-in
 [gouq](https://github.com/buaazp/libuq/gouq)  |  Go  | official
+[juq](https://github.com/buaazp/libuq/juq)  |  Java  | [sumory](https://github.com/sumory)
   phpuq |  PHP     | coming soon
   pyuq  |  Python  | coming soon
    ...  |  ...     | TODO
@@ -55,12 +56,31 @@ go build examples/go-uq.go
 Usage of ./go-uq:
   -cluster="uq": cluster name in etcd
   -etcd="": etcd service location
-  -ip="127.0.0.1": self ip address
+  -ip="127.0.0.1": uq server ip address
   -line="x": line name
-  -port=8808: listen port
+  -port=8808: uq server port
   -protocol="redis": frontend interface(redis, mc, http)
   -topic="foo": topic name
 ```
+
+### juq
+
+Juq is the Java library of uq cluster, Juq use redis client - [aredis](http://aredis.sourceforge.net/), and modify it to support commands from `uq`
+
+```
+//package org.aredis.cache
+public enum RedisCommand {
+
+    //###### modified by sumory for uq ######
+    ADD("kk"), DEL("k"),
+    //DEL("k@k", false, false, IntegerShardedResultHandler.instance),
+    //###### modified by sumory for uq ######
+    ...
+}
+```
+
+Goto the [tests](juq/src/test/java/com/sumory/juq/JuqTest.java) for usage detail.
+
 
 ### Need Contributions
 

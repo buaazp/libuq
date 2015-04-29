@@ -20,8 +20,8 @@ var (
 )
 
 func init() {
-	flag.StringVar(&ip, "ip", "127.0.0.1", "self ip address")
-	flag.IntVar(&port, "port", 8808, "listen port")
+	flag.StringVar(&ip, "ip", "127.0.0.1", "uq server ip address")
+	flag.IntVar(&port, "port", 8808, "uq server port")
 	flag.StringVar(&protocol, "protocol", "redis", "frontend interface(redis, mc, http)")
 	flag.StringVar(&etcd, "etcd", "", "etcd service location")
 	flag.StringVar(&cluster, "cluster", "uq", "cluster name in etcd")
