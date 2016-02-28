@@ -11,7 +11,7 @@
 [gouq](https://github.com/buaazp/libuq/gouq)  |  Go  | official
 [juq](https://github.com/buaazp/libuq/juq)  |  Java  | [sumory](https://github.com/sumory)
   phpuq |  PHP     | coming soon
-  pyuq  |  Python  | coming soon
+[pyuq](https://github.com/amyangfei/pyuq)  |  Python  | [amyangfei](https://github.com/amyangfei)
    ...  |  ...     | TODO
 
 ### gouq
@@ -81,6 +81,17 @@ public enum RedisCommand {
 
 Goto the [tests](juq/src/test/java/com/sumory/juq/JuqTest.java) for usage detail.
 
+### pyuq
+
+PyUQ is a python client library for uq cluster supporting the http/redis/memcache based protocol. Pyuq is compatible with python 2.7/3.4/3.5
+
+To install pyuq, simply:
+
+```
+$ pip install uq
+```
+
+Goto [examples](https://github.com/amyangfei/pyuq/tree/master/examples) and [tests](https://github.com/amyangfei/pyuq/tree/master/tests) for usage detail.
 
 ### Need Contributions
 
